@@ -1,0 +1,244 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{领域}} · 知识地图</title>
+<!--
+  领域知识地图 · HTML 模板 v2（domain-map skill 内置）
+  用法：保留全部 CSS 与布局骨架，只替换 {{槽位}} 与卡片内容。
+  结构：封面卡片（a.card 链接到 #mN）+ 浮窗弹层（.modal:target 纯CSS零JS）。
+  每个主干模块 = 一张封面卡片 + 一个对应 id="mN" 的 .modal（N 从 1 开始连续编号）。
+  呈现固定为网格卡片+浮窗，不做拓扑切换。
+  配色：主色 #1F5C4D，可随领域气质微调（保持柔和低饱和），其余设计令牌不动。
+  卡片「展开 ▾」点击后浮出「点不开？下载后可正常打开」提示（隐藏 checkbox 切换，再点收起），保留不删。
+  移动端硬要求：自定义新增区块必须适配 640px 以下小屏（单栏、字号/间距收敛、禁横向溢出），沿用模板已有 @media 规则。
+-->
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:"PingFang SC","Microsoft YaHei","Noto Sans CJK SC",sans-serif; background:#F6F4EE; color:#2B332F; line-height:1.6; padding:24px 16px 48px; }
+  .wrap { max-width:960px; margin:0 auto; }
+  .hero { background:#1F5C4D; color:#fff; border-radius:20px; padding:28px 28px 24px; box-shadow:0 6px 24px rgba(31,92,77,.18); }
+  .hero h1 { font-size:26px; letter-spacing:1px; }
+  .hero p { margin-top:8px; font-size:14px; opacity:.85; }
+  .sec-label { display:flex; align-items:center; gap:10px; margin:32px 4px 8px; font-size:17px; font-weight:700; color:#1F5C4D; }
+  .sec-label::after { content:""; flex:1; height:1px; background:#D8D3C6; }
+  .sec-note { font-size:13px; color:#7A7568; margin:0 6px 16px; }
+  .grid-cards { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; }
+  @media (max-width:900px){ .grid-cards{ grid-template-columns:repeat(2,1fr);} }
+  @media (max-width:640px){ .grid-cards{ grid-template-columns:1fr;} }
+  .card { display:block; text-decoration:none; color:inherit; background:#fff; border-radius:16px; padding:18px 18px 16px; border:1px solid #EDE9DF; box-shadow:0 3px 12px rgba(60,60,40,.07); transition:transform .2s ease, box-shadow .2s ease; position:relative; }
+  .card:hover { transform:translateY(-2px); box-shadow:0 8px 20px rgba(60,60,40,.12); }
+  .card .num { display:inline-block; width:26px; height:26px; line-height:26px; text-align:center; border-radius:50%; background:#1F5C4D; color:#fff; font-size:14px; font-weight:700; }
+  .card h3 { font-size:17px; margin:10px 0 6px; color:#1F5C4D; }
+  .card .gist { font-size:13px; color:#6B675C; margin-bottom:12px; min-height:40px; }
+  .tags { display:flex; flex-wrap:wrap; gap:6px; }
+  .tag { font-size:11.5px; background:#EEF4F0; color:#2F6B57; border:1px solid #D8E7DE; border-radius:999px; padding:3px 10px; }
+  .card .hint { position:absolute; top:16px; right:16px; font-size:11.5px; color:#8FA89C; cursor:pointer; }
+  .card .hint::after { content:"展开 ▾"; }
+  .card:hover .hint::after { color:#2F6B57; }
+  .card .hint::before { content:"点不开？下载后可正常打开"; position:absolute; top:20px; right:0; width:128px; background:#2B332F; color:#fff; font-size:11px; line-height:1.5; padding:6px 10px; border-radius:8px; box-shadow:0 4px 14px rgba(0,0,0,.18); opacity:0; pointer-events:none; transition:opacity .15s ease; z-index:5; }
+  .tipcheck { display:none; }
+  .tipcheck:checked ~ .hint::before { opacity:1; }
+  .loop { margin-top:14px; font-size:12.5px; color:#7A7568; background:#FBFAF6; border:1px dashed #C9C2B2; border-radius:12px; padding:10px 14px; }
+  .modal { position:fixed; inset:0; background:rgba(31,41,37,.45); display:none; align-items:center; justify-content:center; padding:20px; z-index:50; }
+  .modal:target, .modal.open { display:flex; }
+  .modal .veil { position:absolute; inset:0; cursor:default; }
+  .modal .box { position:relative; z-index:1; background:#fff; border-radius:18px; max-width:560px; width:100%; max-height:80vh; overflow:auto; padding:24px 26px 20px; box-shadow:0 12px 40px rgba(0,0,0,.18); animation:pop .18s ease; }
+  @keyframes pop { from { opacity:0; transform:translateY(8px) scale(.98);} to { opacity:1; transform:none;} }
+  .modal .close { position:absolute; top:12px; right:16px; text-decoration:none; color:#8A8578; font-size:24px; line-height:1; }
+  .modal .close:hover { color:#1F5C4D; }
+  .modal .mnum { display:inline-block; width:26px; height:26px; line-height:26px; text-align:center; border-radius:50%; background:#1F5C4D; color:#fff; font-size:14px; font-weight:700; }
+  .modal h3 { display:inline; font-size:18px; color:#1F5C4D; margin-left:8px; }
+  .modal .mg { font-size:12.5px; color:#8A8578; margin:8px 0 14px; }
+  .modal li { font-size:13.5px; color:#57534A; margin-left:20px; margin-bottom:10px; }
+  .modal li b { color:#2F6B57; }
+  .branch .card { background:#FDFCF9; }
+  .branch .num { background:#8FA89C; }
+  .branch h3 { color:#4E6B5E; }
+  .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  @media (max-width:720px){ .grid2{ grid-template-columns:1fr; } }
+  .panel { background:#fff; border-radius:16px; padding:16px; box-shadow:0 3px 12px rgba(60,60,40,.06); border:1px solid #EDE9DF; }
+  .panel h4 { font-size:14px; color:#1F5C4D; margin-bottom:8px; }
+  .panel li { font-size:12.5px; color:#57534A; margin-left:18px; margin-bottom:6px; }
+  .path { background:#2F6B57; color:#fff; border-radius:16px; padding:16px 20px; margin-top:32px; font-size:14px; }
+  .path b { color:#CDE7D9; }
+  .book { background:#fff; border:1px solid #EDE9DF; border-radius:14px; padding:14px 16px; margin-bottom:10px; font-size:13px; }
+  .book b { color:#1F5C4D; }
+  .book a { color:#2F6B57; word-break:break-all; }
+  .book .why { color:#6B675C; margin-top:4px; }
+  .verify { display:inline-block; font-size:11px; background:#EEF4F0; color:#2F6B57; border-radius:999px; padding:2px 8px; margin-left:6px; }
+  .verify.pending { background:#FBF3E4; color:#9A7B2D; }
+  .quest { border-left:4px solid #1F5C4D; padding:16px 18px; }
+  .quest .q-essence { font-size:14px; font-weight:600; color:#2B332F; margin-bottom:10px; }
+  .quest li { font-size:13px; color:#57534A; margin-left:18px; margin-bottom:8px; }
+  .quest li b { color:#1F5C4D; }
+  .quest .q-map { margin-top:10px; font-size:12.5px; color:#8A8578; }
+  .foot { margin-top:24px; font-size:12px; color:#8A8578; }
+  .foot li { margin-left:18px; margin-bottom:4px; }
+  html, body { overflow-x:hidden; }
+  img, table { max-width:100%; }
+  @media (max-width:640px){
+    body { padding:16px 12px 36px; }
+    .hero { padding:22px 20px 20px; border-radius:16px; }
+    .hero h1 { font-size:21px; }
+    .hero p { font-size:12.5px; }
+    .sec-label { font-size:15.5px; margin:24px 2px 6px; }
+    .sec-note { font-size:12.5px; margin:0 4px 12px; }
+    .card { padding:16px 16px 14px; border-radius:14px; }
+    .card .gist { min-height:0; margin-bottom:10px; }
+    .card .hint::before { width:116px; font-size:10.5px; }
+    .quest, .panel { padding:14px 16px; border-radius:14px; }
+    .modal { padding:12px; }
+    .modal .box { padding:20px 18px 16px; border-radius:16px; max-height:84vh; }
+    .path { padding:14px 16px; font-size:13px; margin-top:24px; border-radius:14px; }
+    .book { padding:12px 14px; }
+    .foot { font-size:11.5px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="hero">
+    <h1>{{领域}} · 知识地图</h1>
+    <p>{{用途与基础}} · 基于权威资料检索的初稿</p>
+  </div>
+
+
+  <div class="sec-label">{{入口框标题：职场领域="这个领域在解决什么问题"｜技能/爱好="这个领域在满足什么需求"｜人物/文化兴趣="这是什么、为什么这么多人着迷"｜都勉强则整块省略}}</div>
+  <div class="panel quest">
+    <p class="q-essence">{{一句话说清这个领域的本质：它在帮谁解决什么根本问题}}</p>
+    <ul>
+      <li><b>{{子问题1}}</b>：{{一句解释}}</li>
+      <li><b>{{子问题2}}</b>：{{一句解释}}</li>
+      <li><b>{{子问题3}}</b>：{{一句解释}}</li>
+    </ul>
+    <p class="q-map">{{可选：下面模块与子问题的对应关系，如"①②回答教谁，③④回答怎么教"}}</p>
+  </div>
+  <div class="sec-label">先学这些 · {{顺序说明}}</div>
+  <div class="sec-note">{{结构逻辑导语：为什么这么分、顺序/依赖/闭环关系，如"前面的不搭，后面跑不动"——一句话讲清结构判断，不写操作说明}}</div>
+
+  <div class="grid-cards">
+    <!-- SLOT: 主干封面卡片，3-7 张；每张 href 指向下方同 id 的 modal；tip id 与 mN 对应且唯一 -->
+    <a class="card" href="#m1">
+      <input class="tipcheck" id="tip1" type="checkbox">
+      <label class="hint" for="tip1"></label>
+      <span class="num">1</span>
+      <h3>{{模块名}}</h3>
+      <div class="gist">{{一句大白话}}</div>
+      <div class="tags"><span class="tag">{{关键概念}}</span><span class="tag">{{关键概念}}</span><span class="tag">{{关键概念}}</span></div>
+    </a>
+    <a class="card" href="#m2">
+      <input class="tipcheck" id="tip2" type="checkbox">
+      <label class="hint" for="tip2"></label>
+      <span class="num">2</span>
+      <h3>{{模块名}}</h3>
+      <div class="gist">{{一句大白话}}</div>
+      <div class="tags"><span class="tag">{{关键概念}}</span><span class="tag">{{关键概念}}</span></div>
+    </a>
+  </div>
+  <div class="loop">{{模块间关系补充：闭环/依赖/回灌，没有可删}}</div>
+
+  <div class="sec-label">有空再学 · {{分支说明}}</div>
+  <div class="sec-note">{{后置理由导语：这些为什么不依赖主干、可以先放着，什么时候再专项推进}}</div>
+
+  <div class="grid-cards branch">
+    <!-- SLOT: 分支卡片（虚线弱化，不做浮窗） -->
+    <div class="card">
+      <span class="num">N</span>
+      <h3>{{模块名}}</h3>
+      <div class="gist">{{一句大白话}}</div>
+      <div class="tags"><span class="tag">{{关键概念}}</span></div>
+    </div>
+  </div>
+
+  <div class="sec-label">来龙去脉</div>
+  <div class="sec-note">地图之外，再补三块背景：它怎么演变来的、现在有哪些玩法、做得好不好怎么判断。</div>
+  <div class="grid2">
+    <div class="panel">
+      <h4>纵向看演进：这个领域怎么走到今天</h4>
+      <ul>
+        <li>{{关键节点1}}</li>
+        <li>{{关键节点2}}</li>
+        <li>{{关键节点3}}</li>
+      </ul>
+    </div>
+    <div class="panel">
+      <h4>横向看流派：当下几条路线</h4>
+      <ul>
+        <li>{{流派/框架1}}</li>
+        <li>{{流派/框架2}}</li>
+        <li>{{流派/框架3}}</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="panel" style="margin-top:12px">
+      <h4 style="margin-top:12px">这个领域怎么研究和实践</h4>
+      <ul>
+        <li>{{研究范式 + 实践方式}}</li>
+      </ul>
+      <h4 style="margin-top:12px">评价标准：{{怎么判断做得对不对}}</h4>
+      <ul>
+        <li>{{评价标准1}}</li>
+        <li>{{评价标准2}}</li>
+      </ul>
+  </div>
+
+  <div class="path">
+    🧭 <b>入门路径</b>：{{一句话学习顺序：先啃哪个主干 → 哪个分支可暂缓}}
+  </div>
+
+  <div class="sec-label">推荐书单 · 用这些书的目录核对这张地图</div>
+  <div class="book">
+    <b>{{书名}}</b><span class="verify">已查证</span>
+    <div class="why">{{推荐理由：和这个领域的关系}}</div>
+    <a href="{{链接}}">{{链接}}</a>
+  </div>
+  <div class="book">
+    <b>{{书名}}</b><span class="verify pending">待复核</span>
+    <div class="why">{{推荐理由}}</div>
+    <a href="{{链接}}">{{链接}}</a>
+  </div>
+
+  <div class="foot">
+    <p><b>这张地图管什么</b>：{{一句话说清覆盖范围和不覆盖什么}}</p>
+    <p style="margin-top:8px"><b>信息源</b>（简版，全list见对话文字版）：</p>
+    <ul>
+      <li>{{来源1}}</li>
+      <li>{{来源2}}</li>
+      <li>{{来源3}}</li>
+    </ul>
+  </div>
+
+</div>
+
+<!-- SLOT: 浮窗弹层，与封面卡片一一对应（id 连续编号） -->
+<div class="modal" id="m1"><a class="veil" href="#"></a><div class="box"><a class="close" href="#">×</a>
+  <span class="mnum">1</span><h3>{{模块名}}</h3>
+  <div class="mg">{{一句大白话}}</div>
+  <ul>
+    <li><b>{{关键概念}}</b>：{{一句大白话解释}}</li>
+    <li><b>{{关键概念}}</b>：{{一句大白话解释}}</li>
+    <li><b>{{关键概念}}</b>：{{一句大白话解释}}</li>
+  </ul>
+</div></div>
+<div class="modal" id="m2"><a class="veil" href="#"></a><div class="box"><a class="close" href="#">×</a>
+  <span class="mnum">2</span><h3>{{模块名}}</h3>
+  <div class="mg">{{一句大白话}}</div>
+  <ul>
+    <li><b>{{关键概念}}</b>：{{一句大白话解释}}</li>
+    <li><b>{{关键概念}}</b>：{{一句大白话解释}}</li>
+  </ul>
+</div></div>
+
+<script>
+document.addEventListener('click', function(e){
+  var a = e.target.closest('a.card');
+  if (a) { e.preventDefault(); var m = document.querySelector(a.getAttribute('href')); if (m) m.classList.add('open'); return; }
+  var c = e.target.closest('.modal .close, .modal .veil');
+  if (c) { e.preventDefault(); c.closest('.modal').classList.remove('open'); }
+});
+</script></body>
+</html>
