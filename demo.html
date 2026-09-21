@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>人的元学习（学会学习） · 知识地图</title>
+<!--
+  领域知识地图 · 基于模板 v2.1（knowledge-map-public）生成
+  用途：给员工设计元学习训练产品（含能力评估）
+  呈现结构：封面卡片 + 点按浮窗（固定版式，不做拓扑切换）
+-->
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:"PingFang SC","Microsoft YaHei","Noto Sans CJK SC",sans-serif; background:#F6F4EE; color:#2B332F; line-height:1.6; padding:24px 16px 48px; }
+  .wrap { max-width:960px; margin:0 auto; }
+  .hero { background:#1F5C4D; color:#fff; border-radius:20px; padding:28px 28px 24px; box-shadow:0 6px 24px rgba(31,92,77,.18); }
+  .hero h1 { font-size:26px; letter-spacing:1px; }
+  .hero p { margin-top:8px; font-size:14px; opacity:.85; }
+  .sec-label { display:flex; align-items:center; gap:10px; margin:32px 4px 8px; font-size:17px; font-weight:700; color:#1F5C4D; }
+  .sec-label::after { content:""; flex:1; height:1px; background:#D8D3C6; }
+  .sec-note { font-size:13px; color:#7A7568; margin:0 6px 16px; }
+  .grid-cards { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; }
+  @media (max-width:900px){ .grid-cards{ grid-template-columns:repeat(2,1fr);} }
+  @media (max-width:640px){ .grid-cards{ grid-template-columns:1fr;} }
+  .card { display:block; text-decoration:none; color:inherit; background:#fff; border-radius:16px; padding:18px 18px 16px; border:1px solid #EDE9DF; box-shadow:0 3px 12px rgba(60,60,40,.07); transition:transform .2s ease, box-shadow .2s ease; position:relative; }
+  .card:hover { transform:translateY(-2px); box-shadow:0 8px 20px rgba(60,60,40,.12); }
+  .card .num { display:inline-block; width:26px; height:26px; line-height:26px; text-align:center; border-radius:50%; background:#1F5C4D; color:#fff; font-size:14px; font-weight:700; }
+  .card h3 { font-size:17px; margin:10px 0 6px; color:#1F5C4D; }
+  .card .gist { font-size:13px; color:#6B675C; margin-bottom:12px; min-height:40px; }
+  .tags { display:flex; flex-wrap:wrap; gap:6px; }
+  .tag { font-size:11.5px; background:#EEF4F0; color:#2F6B57; border:1px solid #D8E7DE; border-radius:999px; padding:3px 10px; }
+  .card .hint { position:absolute; top:16px; right:16px; font-size:11.5px; color:#8FA89C; cursor:pointer; }
+  .card .hint::after { content:"展开 ▾"; }
+  .card:hover .hint::after { color:#2F6B57; }
+  .card .hint::before { content:"点不开？下载后可正常打开"; position:absolute; top:20px; right:0; width:128px; background:#2B332F; color:#fff; font-size:11px; line-height:1.5; padding:6px 10px; border-radius:8px; box-shadow:0 4px 14px rgba(0,0,0,.18); opacity:0; pointer-events:none; transition:opacity .15s ease; z-index:5; }
+  .tipcheck { display:none; }
+  .tipcheck:checked ~ .hint::before { opacity:1; }
+  .loop { margin-top:14px; font-size:12.5px; color:#7A7568; background:#FBFAF6; border:1px dashed #C9C2B2; border-radius:12px; padding:10px 14px; }
+  .modal { position:fixed; inset:0; background:rgba(31,41,37,.45); display:none; align-items:center; justify-content:center; padding:20px; z-index:50; }
+  .modal:target, .modal.open { display:flex; }
+  .modal .veil { position:absolute; inset:0; cursor:default; }
+  .modal .box { position:relative; z-index:1; background:#fff; border-radius:18px; max-width:560px; width:100%; max-height:80vh; overflow:auto; padding:24px 26px 20px; box-shadow:0 12px 40px rgba(0,0,0,.18); animation:pop .18s ease; }
+  @keyframes pop { from { opacity:0; transform:translateY(8px) scale(.98);} to { opacity:1; transform:none;} }
+  .modal .close { position:absolute; top:12px; right:16px; text-decoration:none; color:#8A8578; font-size:24px; line-height:1; }
+  .modal .close:hover { color:#1F5C4D; }
+  .modal .mnum { display:inline-block; width:26px; height:26px; line-height:26px; text-align:center; border-radius:50%; background:#1F5C4D; color:#fff; font-size:14px; font-weight:700; }
+  .modal h3 { display:inline; font-size:18px; color:#1F5C4D; margin-left:8px; }
+  .modal .mg { font-size:12.5px; color:#8A8578; margin:8px 0 14px; }
+  .modal li { font-size:13.5px; color:#57534A; margin-left:20px; margin-bottom:10px; }
+  .modal li b { color:#2F6B57; }
+  .branch .card { background:#FDFCF9; }
+  .branch .num { background:#8FA89C; }
+  .branch h3 { color:#4E6B5E; }
+  .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  @media (max-width:720px){ .grid2{ grid-template-columns:1fr; } }
+  .panel { background:#fff; border-radius:16px; padding:16px; box-shadow:0 3px 12px rgba(60,60,40,.06); border:1px solid #EDE9DF; }
+  .panel h4 { font-size:14px; color:#1F5C4D; margin-bottom:8px; }
+  .panel li { font-size:12.5px; color:#57534A; margin-left:18px; margin-bottom:6px; }
+  .path { background:#2F6B57; color:#fff; border-radius:16px; padding:16px 20px; margin-top:32px; font-size:14px; }
+  .path b { color:#CDE7D9; }
+  .book { background:#fff; border:1px solid #EDE9DF; border-radius:14px; padding:14px 16px; margin-bottom:10px; font-size:13px; }
+  .book b { color:#1F5C4D; }
+  .book a { color:#2F6B57; word-break:break-all; }
+  .book .why { color:#6B675C; margin-top:4px; }
+  .verify { display:inline-block; font-size:11px; background:#EEF4F0; color:#2F6B57; border-radius:999px; padding:2px 8px; margin-left:6px; }
+  .verify.pending { background:#FBF3E4; color:#9A7B2D; }
+  .quest { border-left:4px solid #1F5C4D; padding:16px 18px; }
+  .quest .q-essence { font-size:14px; font-weight:600; color:#2B332F; margin-bottom:10px; }
+  .quest li { font-size:13px; color:#57534A; margin-left:18px; margin-bottom:8px; }
+  .quest li b { color:#1F5C4D; }
+  .quest .q-map { margin-top:10px; font-size:12.5px; color:#8A8578; }
+  .foot { margin-top:24px; font-size:12px; color:#8A8578; }
+  .foot li { margin-left:18px; margin-bottom:4px; }
+  html, body { overflow-x:hidden; }
+  img, table { max-width:100%; }
+  @media (max-width:640px){
+    body { padding:16px 12px 36px; }
+    .hero { padding:22px 20px 20px; border-radius:16px; }
+    .hero h1 { font-size:21px; }
+    .hero p { font-size:12.5px; }
+    .sec-label { font-size:15.5px; margin:24px 2px 6px; }
+    .sec-note { font-size:12.5px; margin:0 4px 12px; }
+    .card { padding:16px 16px 14px; border-radius:14px; }
+    .card .gist { min-height:0; margin-bottom:10px; }
+    .card .hint::before { width:116px; font-size:10.5px; }
+    .quest, .panel { padding:14px 16px; border-radius:14px; }
+    .modal { padding:12px; }
+    .modal .box { padding:20px 18px 16px; border-radius:16px; max-height:84vh; }
+    .path { padding:14px 16px; font-size:13px; margin-top:24px; border-radius:14px; }
+    .book { padding:12px 14px; }
+    .foot { font-size:11.5px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="hero">
+    <h1>人的元学习（学会学习） · 知识地图</h1>
+    <p>用途：给员工设计元学习训练产品（含能力评估） · 基于权威资料检索的初稿</p>
+  </div>
+
+
+  <div class="sec-label">这个领域在解决什么问题</div>
+  <div class="panel quest">
+    <p class="q-essence">元学习就是"学会如何学习"：让学习者从被动的知识接收者，变成自己学习过程的管理者。企业场景里它解决的是那两个老大难：培训完就忘（学了存不住），以及学了不会用（能力不迁移）。</p>
+    <ul>
+      <li><b>为什么学了会忘</b>：大脑的遗忘是默认设置，普通学习方法（反复读、划重点）恰恰在给遗忘放行</li>
+      <li><b>为什么"感觉自己会"不可信</b>：流利错觉让人误判掌握程度——这是元认知要治的病</li>
+      <li><b>怎么让人自己管理学习</b>：把计划、执行、反思变成可训练的循环，而不是靠天赋</li>
+    </ul>
+    <p class="q-map">①回答"大脑怎么学"，②③④回答"训什么"，⑤回答"怎么训"，⑥回答"训得怎么样"。</p>
+  </div>
+  <div class="sec-label">先学这些 · 按依赖顺序</div>
+  <div class="sec-note">①是地基：不懂"大脑怎么学"，后面的训练设计就是拍脑袋；②③④是产品要装的"能力零件"；⑤把零件组装成产品；⑥给产品装仪表盘。地基不牢，零件再好也装不稳。</div>
+
+  <div class="grid-cards">
+    <a class="card" href="#m1">
+      <input class="tipcheck" id="tip1" type="checkbox">
+      <label class="hint" for="tip1"></label>
+      <span class="num">1</span>
+      <h3>学习科学地基</h3>
+      <div class="gist">大脑到底怎么吸收和保存知识——所有训练方法的证据来源</div>
+      <div class="tags"><span class="tag">合意困难</span><span class="tag">检索练习</span><span class="tag">间隔效应</span><span class="tag">双重编码</span></div>
+    </a>
+    <a class="card" href="#m2">
+      <input class="tipcheck" id="tip2" type="checkbox">
+      <label class="hint" for="tip2"></label>
+      <span class="num">2</span>
+      <h3>元认知（核心引擎）</h3>
+      <div class="gist">对自己思维的觉察和控制——"知道自己在不在真懂"的本事</div>
+      <div class="tags"><span class="tag">元认知觉察</span><span class="tag">监控</span><span class="tag">控制</span><span class="tag">流利错觉</span></div>
+    </a>
+    <a class="card" href="#m3">
+      <input class="tipcheck" id="tip3" type="checkbox">
+      <label class="hint" for="tip3"></label>
+      <span class="num">3</span>
+      <h3>自我调节学习 SRL</h3>
+      <div class="gist">把学习变成"计划→执行→反思"的自我管理循环，产品设计的主框架</div>
+      <div class="tags"><span class="tag">三阶段循环</span><span class="tag">目标设定</span><span class="tag">自我评估</span><span class="tag">归因</span></div>
+    </a>
+    <a class="card" href="#m4">
+      <input class="tipcheck" id="tip4" type="checkbox">
+      <label class="hint" for="tip4"></label>
+      <span class="num">4</span>
+      <h3>动机与信念系统</h3>
+      <div class="gist">决定训练能不能持续的燃料——人相信能力可变，才肯持续下功夫</div>
+      <div class="tags"><span class="tag">成长型思维</span><span class="tag">自我效能</span><span class="tag">目标导向</span></div>
+    </a>
+    <a class="card" href="#m5">
+      <input class="tipcheck" id="tip5" type="checkbox">
+      <label class="hint" for="tip5"></label>
+      <span class="num">5</span>
+      <h3>训练转化设计</h3>
+      <div class="gist">把科学原理变成员工愿意用、用得动的产品干预</div>
+      <div class="tags"><span class="tag">策略显性教学</span><span class="tag">认知学徒制</span><span class="tag">刻意练习</span><span class="tag">反思日志</span></div>
+    </a>
+    <a class="card" href="#m6">
+      <input class="tipcheck" id="tip6" type="checkbox">
+      <label class="hint" for="tip6"></label>
+      <span class="num">6</span>
+      <h3>能力评估与测量</h3>
+      <div class="gist">怎么知道员工"会学习"了——量表、行为证据、业务结果三层</div>
+      <div class="tags"><span class="tag">MSLQ/MAI</span><span class="tag">行为证据</span><span class="tag">延迟保持测试</span></div>
+    </a>
+  </div>
+  <div class="loop">②和③是一个闭环：元认知监控（"我现在学得怎样"）驱动 SRL 循环做调整，SRL 每转一圈又反过来练元认知——你的训练产品主环可以就架在这上面。④给这个环供燃料，①给整个系统供证据，⑥是仪表盘。</div>
+
+  <div class="sec-label">有空再学 · 后置的专项分支</div>
+  <div class="sec-note">这些不是不重要，而是不挡路：做员工训练产品用不到先学，等主干跑通、产品要升级或做差异化时再专项补。</div>
+
+  <div class="grid-cards branch">
+    <div class="card">
+      <span class="num">7</span>
+      <h3>AI 的元学习（MAML）</h3>
+      <div class="gist">让算法学会学习，同名不同物；除非做 AI+学习产品的交叉，否则先放</div>
+      <div class="tags"><span class="tag">少样本学习</span><span class="tag">迁移优化</span></div>
+    </div>
+    <div class="card">
+      <span class="num">8</span>
+      <h3>学习风格类流行说法</h3>
+      <div class="gist">"视觉型/听觉型学习者"证据不足——学它是为了避坑，别做进产品</div>
+      <div class="tags"><span class="tag">学习风格迷思</span></div>
+    </div>
+    <div class="card">
+      <span class="num">9</span>
+      <h3>学习科学与分析平台</h3>
+      <div class="gist">Learning Analytics、神经科学细节：有意思，但对训练产品是背景板和平台能力</div>
+      <div class="tags"><span class="tag">学习分析</span><span class="tag">记忆生物学</span></div>
+    </div>
+  </div>
+
+  <div class="sec-label">来龙去脉</div>
+  <div class="sec-note">地图之外，再补三块背景：它怎么演变来的、现在有哪些玩法、做得好不好怎么判断。</div>
+  <div class="grid2">
+    <div class="panel">
+      <h4>纵向看演进：这个领域怎么走到今天</h4>
+      <ul>
+        <li>1970-80年代：Flavell 提出"元认知"概念，研究开始从"学什么"转向"怎么监控自己的学"</li>
+        <li>1989-2000年代：Zimmerman 系统化自我调节学习模型；Dweck 思维模式研究成熟；2000年《How People Learn》综合学习科学成果</li>
+        <li>2013-2014年：Dunlosky 团队给十大学习策略按证据分级；《Make It Stick》把认知科学说给大众听</li>
+        <li>2015至今：OECD 教育2030把"学会学习"列为核心素养；AI 时代组织把员工学习速度当竞争力，企业训练需求升温</li>
+      </ul>
+    </div>
+    <div class="panel">
+      <h4>横向看流派：当下几条路线</h4>
+      <ul>
+        <li><b>认知科学派</b>：记忆与策略，证据为王（Make It Stick、Dunlosky 分级）——练"术"</li>
+        <li><b>SRL/动机派</b>：Zimmerman、Bandura——练"自我管理的系统"</li>
+        <li><b>素养课程派</b>：OECD、21世纪技能框架——把学会学习变成课程目标</li>
+        <li><b>企业实践派</b>：ATD 能力模型、L&D 从业者——落到员工发展产品，你的位置在这条线，前三条是你的供给来源</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="panel" style="margin-top:12px">
+      <h4 style="margin-top:12px">这个领域怎么研究和实践</h4>
+      <ul>
+        <li>研究范式：认知心理学实验 + 元分析（大量研究汇总算平均效应量），教育干预做随机对照试验</li>
+        <li>实践方式：把策略教学嵌入真实学习任务——不是先上"学习方法课"再干活，而是在干活中练方法</li>
+      </ul>
+      <h4 style="margin-top:12px">评价标准：怎么判断做得对不对</h4>
+      <ul>
+        <li>看证据等级：一个方法有没有元分析级别的效应量支撑（检索练习、间隔练习是高分选手；重读、划重点是低分选手）</li>
+        <li>看迁移和保持：不是当场学会，而是延迟测试（一周/一月后）还留得住、换场景还用得出</li>
+        <li>看行为证据：员工离开课堂后，自主学习行为的频率和质量有没有变化——这是训练产品真正要交付的结果</li>
+      </ul>
+  </div>
+
+  <div class="path">
+    🧭 <b>入门路径</b>：先啃①学科学地基建立判断力 → ②③一起学，它们是你的产品主环（元认知+SRL循环）→ ④作为燃料系统融入②③的训练设计 → ⑤把②③④组装成产品 → ⑥与⑤并行搭评估。⑦⑧⑨暂缓，⑧建议当避坑清单随时查。另：②③可并行学，一个讲"监控什么"，一个讲"怎么循环"。
+  </div>
+
+  <div class="sec-label">推荐书单 · 用这些书的目录核对这张地图</div>
+  <div class="book">
+    <b>《Make It Stick: The Science of Successful Learning》</b><span class="verify">已查证</span>
+    <div class="why">认知科学派代表作，把合意困难、检索练习、间隔效应这些核心原理一次讲全，训练设计的证据手册</div>
+    <a href="https://www.hup.harvard.edu/books/9780674729018">https://www.hup.harvard.edu/books/9780674729018</a>
+  </div>
+  <div class="book">
+    <b>《How People Learn: Brain, Mind, Experience, and School》</b><span class="verify">已查证</span>
+    <div class="why">美国国家研究理事会的学习科学综述，元认知、迁移、专家与新手的差异都在里面有出处</div>
+    <a href="https://www.nap.edu/catalog/9853/how-people-learn-brain-mind-experience-and-school-expanded-edition">https://www.nap.edu/catalog/9853/how-people-learn-brain-mind-experience-and-school-expanded-edition</a>
+  </div>
+  <div class="book">
+    <b>Dunlosky 等（2013）：Improving Students' Learning With Effective Learning Techniques</b><span class="verify">已查证</span>
+    <div class="why">十大学习策略的证据分级大排名，帮你直接判断哪些方法值得做进产品</div>
+    <a href="https://www.researchgate.net/publication/258180568_Improving_Students'_Learning_With_Effective_Learning_Techniques">https://www.researchgate.net/publication/258180568</a>
+  </div>
+
+  <div class="foot">
+    <p><b>这张地图管什么</b>：覆盖"人的元学习"的科学原理、能力构件、训练转化和评估四层，服务于企业训练产品设计；不覆盖逐点教学（每个策略怎么教）、AI元学习算法细节、学习平台技术选型。</p>
+    <p style="margin-top:8px"><b>信息源</b>（简版，全list见对话文字版）：</p>
+    <ul>
+      <li>Make It Stick（哈佛大学出版社官网）</li>
+      <li>Dunlosky et al. 2013 十大学习策略效用研究</li>
+      <li>Zimmerman 自我调节学习：Wikipedia + 美国 TEAL Center 事实卡</li>
+      <li>《How People Learn》（Bransford 等编，学习科学综述）</li>
+      <li>OECD Future of Education and Skills 2030</li>
+    </ul>
+  </div>
+
+</div>
+
+<!-- 浮窗弹层：与封面卡片一一对应 -->
+<div class="modal" id="m1"><a class="veil" href="#"></a><div class="box"><a class="close" href="#">×</a>
+  <span class="mnum">1</span><h3>学习科学地基</h3>
+  <div class="mg">大脑到底怎么吸收和保存知识——所有训练方法的证据来源</div>
+  <ul>
+    <li><b>合意困难</b>：学起来费劲、感觉不爽的方法，恰恰记得更牢；学起来顺滑的，往往存不住</li>
+    <li><b>检索练习</b>：考试、自测、复述这类"往外倒"的动作，比反复阅读这类"往里灌"的动作有效得多</li>
+    <li><b>间隔效应</b>：同样10小时，摊到十天用，比一天灌完记得牢得多</li>
+    <li><b>双重编码</b>：文字配图、抽象配例子，两条通道存记忆比一条牢</li>
+  </ul>
+</div></div>
+<div class="modal" id="m2"><a class="veil" href="#"></a><div class="box"><a class="close" href="#">×</a>
+  <span class="mnum">2</span><h3>元认知（核心引擎）</h3>
+  <div class="mg">对自己思维的觉察和控制——"知道自己在不在真懂"的本事</div>
+  <ul>
+    <li><b>元认知觉察</b>：意识到"我现在的学习方式是什么、效果如何"，是一切的起点</li>
+    <li><b>监控</b>：学习过程中持续判断"这个我真的懂了吗，还是只是看着眼熟"</li>
+    <li><b>控制</b>：根据监控结果调整策略——换个方法、放慢、回炉</li>
+    <li><b>流利错觉</b>：把"读得顺"当"学会了"，是元认知的头号敌人，也是训练产品最值得下刀的地方</li>
+  </ul>
+</div></div>
+<div class="modal" id="m3"><a class="veil" href="#"></a><div class="box"><a class="close" href="#">×</a>
+  <span class="mnum">3</span><h3>自我调节学习 SRL</h3>
+  <div class="mg">把学习变成"计划→执行→反思"的自我管理循环，产品设计的主框架</div>
+  <ul>
+    <li><b>三阶段循环</b>：计划（定目标、选策略）→ 执行（投入、维持、调整）→ 反思（自我评估、归因），Zimmerman 的经典模型，可直接当产品的骨架用</li>
+    <li><b>目标设定</b>：具体、有挑战、可自测的目标，本身就是训练的一部分</li>
+    <li><b>自我评估</b>：循环收口的地方——对照目标给自己打分，误差大说明元认知还要练</li>
+    <li><b>归因方式</b>：把失败归到"方法不对"还是"我不行"，直接决定下一圈循环还转不转</li>
+  </ul>
+</div></div>
+<div class="modal" id="m4"><a class="veil" href="#"></a><div class="box"><a class="close" href="#">×</a>
+  <span class="mnum">4</span><h3>动机与信念系统</h3>
+  <div class="mg">决定训练能不能持续的燃料——人相信能力可变，才肯持续下功夫</div>
+  <ul>
+    <li><b>成长型思维</b>：相信能力可以练出来（Dweck）——员工不信这个，前面三个模块都白搭</li>
+    <li><b>自我效能</b>：相信自己能做成某件具体的事（Bandura），靠小胜利累积，产品要设计"赢的机会"</li>
+    <li><b>目标导向</b>：为掌握而学 vs 为表现而学——前者撑得起长周期训练，后者一遇挫折就撤</li>
+  </ul>
+</div></div>
+<div class="modal" id="m5"><a class="veil" href="#"></a><div class="box"><a class="close" href="#">×</a>
+  <span class="mnum">5</span><h3>训练转化设计</h3>
+  <div class="mg">把科学原理变成员工愿意用、用得动的产品干预</div>
+  <ul>
+    <li><b>策略显性教学</b>：不只教业务内容，把"这里该用检索练习"直接点破——教方法本身</li>
+    <li><b>认知学徒制</b>：把专家的思考过程外化给新手看（示范→搭手→放手），70-20-10 的落地形态之一</li>
+    <li><b>刻意练习</b>：针对弱点设计有反馈的重复，而不是重复已会的部分</li>
+    <li><b>反思日志</b>：低成本高杠杆的元认知训练装置——写下来的复盘天然触发监控和控制</li>
+  </ul>
+</div></div>
+<div class="modal" id="m6"><a class="veil" href="#"></a><div class="box"><a class="close" href="#">×</a>
+  <span class="mnum">6</span><h3>能力评估与测量</h3>
+  <div class="mg">怎么知道员工"会学习"了——量表、行为证据、业务结果三层</div>
+  <ul>
+    <li><b>MSLQ / MAI 量表</b>：动机策略问卷、元认知觉察量表——学术上成熟，可做前后测对比</li>
+    <li><b>行为证据</b>：学习日志的频率与质量、主动求助和复盘行为——比自陈问卷更难造假</li>
+    <li><b>延迟保持测试</b>：训练结束一周/一月后再测，才能区分"真学会"和"当场懂"</li>
+    <li><b>与业务耦合</b>：能力指标最终要对得上业务行为变化，否则又是自嗨培训</li>
+  </ul>
+</div></div>
+
+<script>
+document.addEventListener('click', function(e){
+  var a = e.target.closest('a.card');
+  if (a) { e.preventDefault(); var m = document.querySelector(a.getAttribute('href')); if (m) m.classList.add('open'); return; }
+  var c = e.target.closest('.modal .close, .modal .veil');
+  if (c) { e.preventDefault(); c.closest('.modal').classList.remove('open'); }
+});
+</script></body>
+</html>
